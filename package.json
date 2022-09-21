@@ -1,0 +1,43 @@
+{
+  "name": "native-webrtc-app",
+  "version": "0.0.1",
+  "description": "WebRTC App",
+  "engines": {
+    "node": ">=8 <16"
+  },
+  "dependencies": {
+    "async": ">=3.2.2",
+    "colors": ">=1.1.2",
+    "debug": ">=4.3.0",
+    "express": "^4.17.2",
+    "socket.io": "^3.1.2"
+  },
+  "devDependencies": {
+    "@types/async": "^3.2.12",
+    "@types/debug": "^4.1.7",
+    "@types/express": "^4.17.13",
+    "@types/node": "^16.11.21",
+    "@typescript-eslint/eslint-plugin": "^5.10.2",
+    "@typescript-eslint/parser": "^5.10.2",
+    "eslint": "^8.8.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-json": "^3.1.0",
+    "husky": "^7.0.4",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.4.0",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.5.5"
+  },
+  "scripts": {
+    "prepare": "husky install",
+    "prebuild": "rimraf dist",
+    "build": "tsc",
+    "lint": "eslint src/**",
+    "lint:fix": "npm run lint -- --fix",
+    "dev": "tsnd --transpile-only --files src/index.ts",
+    "debug": "tsnd --transpile-only --inspect --files src/index.ts",
+    "cli": "tsnd --transpile-only --files src/index.ts --cli",
+    "test": "jest"
+  }
+}
