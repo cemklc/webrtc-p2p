@@ -5,6 +5,9 @@ let localStream;
 let pc;
 let remoteStream;
 let remoteOffer;
+let devices;
+let videoInputs;
+let audioInputs;
 
 const pcConfig = {
   iceServers: [{
@@ -23,8 +26,31 @@ const remoteVideo = document.querySelector('#remoteVideo');
 const hangupButton = document.getElementById('hangupButton');
 const answerButton = document.getElementById('answerButton');
 const callButton = document.getElementById('callButton');
+const audioBtn = document.getElementById('audioBtn');
+
 const selectVideo = document.getElementById('selectVideo');
 const selectAudio = document.getElementById('selectAudio');
+
+var audioEnabled = true
+audioBtn.addEventListener('click', () => {
+  const audioTrack = localStream.getAudioTracks()[0];
+
+  if (audioEnabled) {
+    audioBtn.classList.add('muted');
+  } else {
+    audioBtn.classList.remove('muted');
+  }
+
+  audioTrack.enabled = !audioEnabled;
+
+  const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+  if (sender) {
+    sender.track.enabled = !audioEnabled;
+  };
+
+  audioEnabled = !audioEnabled;
+  return;
+});
 
 const constraints = {
   audio: true,
@@ -60,7 +86,7 @@ socket.on('full', (roomObject) => {
 socket.on('join', (roomObject) => {
   console.log(`Another peer made a request to join room ${roomObject}`);
   console.log(`This peer is the initiator of room ${roomObject}!`);
-  if(!isInitiator){
+  if (!isInitiator) {
     isInitiator = true;
   }
   isChannelReady = true;
