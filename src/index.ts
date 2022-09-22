@@ -78,7 +78,7 @@ const socketSignalingServer = (httpServerParams: Partial<ServerOptions> |
           const userRoom = roomConnections.get(socket.id);
           socket.broadcast.to(userRoom).emit('message', 'bye');
           roomConnections.delete(socket.id);
-        }catch (error) {
+        } catch (error) {
           console.log(error);
         }
         log(`Client ID ${socket.id} disconnected.`);

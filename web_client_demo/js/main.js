@@ -27,7 +27,8 @@ const hangupButton = document.getElementById('hangupButton');
 const answerButton = document.getElementById('answerButton');
 const callButton = document.getElementById('callButton');
 const audioBtn = document.getElementById('audioBtn');
-
+const anonEffect = document.getElementById('anonEffect');
+const clearEffect = document.getElementById('clearEffect');
 const selectVideo = document.getElementById('selectVideo');
 const selectAudio = document.getElementById('selectAudio');
 
@@ -131,6 +132,7 @@ function handleIceCandidate(event) {
     hangupButton.removeAttribute('disabled');
     selectAudio.setAttribute('disabled', 'disabled');
     selectVideo.setAttribute('disabled', 'disabled');
+    anonEffect.removeAttribute('disabled');
     console.log('End of candidates.');
     setPeerStatus('inCall');
   }
@@ -265,6 +267,61 @@ async function init() {
     });
 };
 
+init();
+
+const webAudio = new WebAudioExtended();
+
+anonEffect.onclick = async () => {
+  try {
+    var sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+    if (sender) {
+      console.log(webAudio.filters);
+      filteredStream = webAudio.anonFilter(localStream);
+      const filteredTrack = filteredStream.getAudioTracks()[0];
+      replaceAudioTrack(filteredTrack);
+      sender = filteredTrack;
+      sender.enabled = !audioBtn.classList.contains('muted');
+      anonEffect.setAttribute('disabled', 'disabled');
+      clearEffect.removeAttribute('disabled');
+    } else {
+      console.log("Filter didn't applied");
+    }
+  }
+  catch (e) {
+    console.log("Error: ", e);
+    console.log("Filter didn't applied");
+  }
+}
+
+clearEffect.onclick = async () => {
+
+  var audioDeviceId = selectAudio.options[selectAudio.selectedIndex].value;
+  var videoDeviceId = selectVideo.options[selectVideo.selectedIndex].value;
+  try {
+    let stream = await navigator.mediaDevices.getUserMedia({
+      audio: { deviceId: audioDeviceId },
+      video: { deviceId: videoDeviceId }
+    });
+    localStream = stream;
+    const clearTrack = localStream.getAudioTracks()[0];
+    replaceAudioTrack(clearTrack);
+    localVideo.srcObject = stream;
+    anonEffect.removeAttribute('disabled');
+    clearEffect.setAttribute('disabled', 'disabled');
+  } catch (error) {
+    alert(error.message);
+  }
+  return;
+}
+
+function replaceAudioTrack(withTrack) {
+  const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+  if (sender) {
+    sender.replaceTrack(withTrack);
+  };
+  return;
+}
+
 selectAudio.onchange = async () => {
   switchDevices();
 }
@@ -290,15 +347,7 @@ async function switchDevices() {
   return;
 }
 
-function replaceTrack(withTrack) {
-  const sender = pc.getSenders().find(s => s.track && s.track.kind === withTrack.type);
-  if (sender) {
-    sender.replaceTrack(withTrack);
-  };
-  return;
-}
 
-init();
 
 hangupButton.onclick = async () => {
   hangup();
@@ -320,6 +369,8 @@ function stop() {
   // Set button availabilities
   selectAudio.removeAttribute('disabled');
   selectVideo.removeAttribute('disabled');
+  anonEffect.setAttribute('disabled', 'disabled');
+  clearEffect.setAttribute('disabled', 'disabled');
   answerButton.setAttribute('disabled', 'disabled');
   hangupButton.setAttribute('disabled', 'disabled');
 
