@@ -58,7 +58,6 @@ do {
 const room = validRoom;
 
 const socket = io();
-// const socket = io("ws://localhost:80");
 
 if (room !== '') {
   socket.emit('create or join', room);
@@ -78,15 +77,18 @@ socket.on('full', (roomObject) => {
 socket.on('join', (roomObject) => {
   console.log(`Another peer made a request to join room ${roomObject}`);
   console.log(`This peer is the initiator of room ${roomObject}!`);
-  if (!isInitiator) {
-    isInitiator = true;
-  }
   isChannelReady = true;
+  if (isInitiator) {
+    maybeStart();
+  }
 });
 
 socket.on('joined', (roomObject) => {
   console.log(`joined: ${roomObject}`);
   setPeerStatus('joined');
+  if (isInitiator) {
+    isInitiator = false
+  }
   isChannelReady = true;
 });
 
@@ -255,6 +257,37 @@ answerButton.onclick = async () => {
   doAnswer();
 };
 
+function search(ele) {
+  if (isStarted) {
+    alert("You can't switch rooms during a call..")
+  } else {
+    if (event.key === 'Enter') {
+      goToNewRoom(ele.value);
+    }
+  }
+}
+
+newRoomButton.onclick = async () => {
+  console.log('clicked new room');
+  if (isStarted) {
+    alert("You can't switch rooms during a call..")
+  } else {
+    goToNewRoom(roomText.value);
+  }
+}
+
+function goToNewRoom(roomName) {
+  console.log('Attempted to create or new join room', roomName);
+  if (roomName !== '') {
+    isStarted = false;
+    isChannelReady = false;
+    socket.emit('create or join', roomName);
+  } else {
+    alert('Room name can not be empty');
+  }
+};
+
+
 callButton.onclick = async () => {
   console.log('clicked call');
   doCall();
@@ -266,12 +299,5 @@ callButton.onclick = async () => {
 window.onbeforeunload = function bye() {
   sendMessage('bye');
 };
-
-function hangup() {
-  console.log('Hanging up.');
-  setPeerStatus('closed');
-  stop();
-  sendMessage('bye');
-}
 
 /// ////////////////////////////////////////

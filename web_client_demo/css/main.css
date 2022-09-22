@@ -51,6 +51,15 @@ button {
   color: white;
 }
 
+.roomButton {
+  background-color: rgb(152, 28, 184);
+  border-radius: 12px;
+  border: none;
+  box-shadow: none;
+  padding: 7px 10px !important;
+  color: white;
+}
+
 button:disabled {
   background-color: rgb(114, 115, 115);
   border-radius: 12px;

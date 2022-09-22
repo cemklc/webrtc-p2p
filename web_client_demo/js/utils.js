@@ -7,6 +7,8 @@ const audioBtn = document.getElementById('audioBtn');
 const selectVideo = document.getElementById('selectVideo');
 const selectAudio = document.getElementById('selectAudio');
 const selectFilter = document.getElementById('selectFilter');
+const newRoomButton = document.getElementById('roomButton');
+const roomText = document.getElementById('newRoomtext');
 
 const webAudio = new WebAudioExtended();
 
@@ -167,6 +169,13 @@ function stop() {
     pc.close();
     pc = null;
 };
+
+function hangup() {
+    console.log('Hanging up.');
+    setPeerStatus('closed');
+    stop();
+    sendMessage('bye');
+  }
 
 function handleRemoteHangup() {
     console.log('Session terminated.');
