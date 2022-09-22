@@ -23,15 +23,14 @@ const d = {
 // Map for each users with their rooms
 const roomConnections = new Map();
 
-
 // Socket.io connection/message handler
 const socketSignalingServer = (httpServerParams: Partial<ServerOptions> |
   http.Server | https.Server | undefined) => {
   const io = new Server(httpServerParams, {
     cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    }
+      origin: '*',
+      methods: ['GET', 'POST'],
+    },
   });
   io.on('connection', (socket) => {
     // convenience function to log server messages on the client
@@ -44,11 +43,10 @@ const socketSignalingServer = (httpServerParams: Partial<ServerOptions> |
 
     socket.on('message', (message: string) => {
       log('Client said: ', message);
-      let userRoom = roomConnections.get(socket.id);
+      const userRoom = roomConnections.get(socket.id);
       if (userRoom) {
         socket.broadcast.to(userRoom).emit('message', message);
       }
-
     });
 
     socket.on('create or join', (room: string) => {
