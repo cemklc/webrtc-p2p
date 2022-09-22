@@ -4,6 +4,7 @@ let isStarted = false;
 let localStream;
 let pc;
 let remoteStream;
+let remoteOffer;
 
 const pcConfig = {
   iceServers: [{
@@ -19,17 +20,22 @@ const sdpConstraints = {
 
 const localVideo = document.querySelector('#localVideo');
 const remoteVideo = document.querySelector('#remoteVideo');
+const hangupButton = document.getElementById('hangupButton');
+const answerButton = document.getElementById('answerButton');
+const callButton = document.getElementById('callButton');
 
 const constraints = {
-  audio: false,
+  audio: true,
   video: true,
 };
 
 /// //////////////////////////////////////////
 
-const room = 'foo';
-// Could prompt for room name:
-// room = prompt('Enter room name:');
+do {
+  var validRoom = prompt("Enter a room name to chat with your friend:");
+} while (validRoom === null || validRoom === "")
+
+const room = validRoom;
 
 const socket = io();
 // const socket = io("ws://localhost:80");
@@ -42,6 +48,7 @@ if (room !== '') {
 socket.on('created', (roomObject) => {
   console.log(`Created room ${roomObject}`);
   isInitiator = true;
+  console.log('User is set to initiator');
 });
 
 socket.on('full', (roomObject) => {
@@ -90,7 +97,9 @@ function handleIceCandidate(event) {
       candidate: event.candidate.candidate,
     });
   } else {
+    hangupButton.removeAttribute('disabled');
     console.log('End of candidates.');
+    setPeerStatus('inCall');
   }
 }
 
@@ -108,8 +117,6 @@ function createPeerConnection() {
 }
 
 function setLocalAndSendMessage(sessionDescription) {
-  // Set Opus as the preferred codec in SDP if Opus is present.
-  //  sessionDescription.sdp = preferOpus(sessionDescription.sdp);
   pc.setLocalDescription(sessionDescription);
   console.log('setLocalAndSendMessage sending message', sessionDescription);
   sendMessage(sessionDescription);
@@ -120,6 +127,7 @@ function handleCreateOfferError(event) {
 }
 
 function doCall() {
+  // Create offer and send it to the peer via signalling server
   console.log('Sending offer to peer');
   pc.createOffer([sdpConstraints])
     .then((offer) => setLocalAndSendMessage(offer))
@@ -135,20 +143,51 @@ function maybeStart() {
     isStarted = true;
     console.log('isInitiator', isInitiator);
     if (isInitiator) {
-      doCall();
+      // Enable call button for the room owner
+      console.log('A new user is joined and peer connection is created, you can call your peer!');
+      setPeerStatus('userJoined');
+      callButton.removeAttribute('disabled');
     }
   }
+}
+// Status messages to keep track of the room and the call
+function setPeerStatus(status) {
+  var notification = '';
+  switch (status) {
+    case 'userJoined':
+      notification = 'A user has joined the room, you can call now';
+      break;
+    case 'joinedNoCall':
+      notification = 'You have joined the room, wait for the call';
+      break;
+    case 'incomingCall':
+      notification = 'You have an incoming call and can answer now';
+      break;
+    case 'inCall':
+      notification = 'You are in a call';
+      break;
+    case 'closed':
+      notification = 'Call ended';
+      break;
+    default:
+      notification = 'The room is empty';
+  }
+  document.getElementById('peerId').innerText = notification;
+  return;
 }
 
 function onCreateSessionDescriptionError(error) {
   trace(`Failed to create session description: ${error.toString()}`);
 }
 
+// Create answer and send it to the peer via signalling server
 function doAnswer() {
   console.log('Sending answer to peer.');
+  pc.setRemoteDescription(new RTCSessionDescription(remoteOffer));
   pc.createAnswer()
     .then((answer) => setLocalAndSendMessage(answer))
     .catch(onCreateSessionDescriptionError);
+  answerButton.setAttribute('disabled', 'disabled');
 }
 
 /// /////////////////////////////////////////////
@@ -165,15 +204,39 @@ function gotStream(stream) {
   }
 }
 
-navigator.mediaDevices.getUserMedia(constraints)
-  .then(gotStream)
-  .catch((e) => {
-    alert(`getUserMedia() error: ${e.name}`);
-  });
+async function init() {
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then(gotStream)
+    .catch((e) => {
+      alert(`getUserMedia() error: ${e.name}`);
+    });
+};
 
+init();
+
+
+
+hangupButton.onclick = async () => {
+  hangup();
+}
+
+answerButton.onclick = async () => {
+  console.log('clicked answer');
+  doAnswer();
+};
+
+callButton.onclick = async () => {
+  console.log('clicked call');
+  doCall();
+  callButton.setAttribute('disabled', 'disabled');
+};
 /// /////////////////////////////////////////////
 
 function stop() {
+  // Set button availabilities
+  answerButton.setAttribute('disabled', 'disabled');
+  hangupButton.setAttribute('disabled', 'disabled');
+
   isStarted = false;
   pc.close();
   pc = null;
@@ -181,6 +244,7 @@ function stop() {
 
 function handleRemoteHangup() {
   console.log('Session terminated.');
+  setPeerStatus('closed');
   stop();
   isInitiator = false;
 }
@@ -194,8 +258,10 @@ socket.on('message', (message) => {
     if (!isInitiator && !isStarted) {
       maybeStart();
     }
-    pc.setRemoteDescription(new RTCSessionDescription(message));
-    doAnswer();
+    remoteOffer = message;
+    console.log('Offer came from peer, you can press answer!');
+    setPeerStatus('incomingCall');
+    answerButton.removeAttribute('disabled');
   } else if (message.type === 'answer' && isStarted) {
     pc.setRemoteDescription(new RTCSessionDescription(message));
   } else if (message.type === 'candidate' && isStarted) {
@@ -217,86 +283,9 @@ window.onbeforeunload = function bye() {
 
 function hangup() {
   console.log('Hanging up.');
+  setPeerStatus('closed');
   stop();
   sendMessage('bye');
 }
 
 /// ////////////////////////////////////////
-
-// Set Opus as the default audio codec if it's present.
-function preferOpus(sdp) {
-  let sdpLines = sdp.split('\r\n');
-  let mLineIndex;
-  // Search for m line.
-  for (var i = 0; i < sdpLines.length; i++) {
-    if (sdpLines[i].search('m=audio') !== -1) {
-      mLineIndex = i;
-      break;
-    }
-  }
-  if (mLineIndex === null) {
-    return sdp;
-  }
-
-  // If Opus is available, set it as the default in m line.
-  for (i = 0; i < sdpLines.length; i++) {
-    if (sdpLines[i].search('opus/48000') !== -1) {
-      const opusPayload = extractSdp(sdpLines[i], /:(\d+) opus\/48000/i);
-      if (opusPayload) {
-        sdpLines[mLineIndex] = setDefaultCodec(
-          sdpLines[mLineIndex],
-          opusPayload,
-        );
-      }
-      break;
-    }
-  }
-
-  // Remove CN in m line and sdp.
-  sdpLines = removeCN(sdpLines, mLineIndex);
-
-  sdp = sdpLines.join('\r\n');
-  return sdp;
-}
-
-function extractSdp(sdpLine, pattern) {
-  const result = sdpLine.match(pattern);
-  return result && result.length === 2 ? result[1] : null;
-}
-
-// Set the selected codec to the first in m line.
-function setDefaultCodec(mLine, payload) {
-  const elements = mLine.split(' ');
-  const newLine = [];
-  let index = 0;
-  for (let i = 0; i < elements.length; i++) {
-    if (index === 3) { // Format of media starts from the fourth.
-      newLine[index++] = payload; // Put target payload to the first.
-    }
-    if (elements[i] !== payload) {
-      newLine[index++] = elements[i];
-    }
-  }
-  return newLine.join(' ');
-}
-
-// Strip CN from sdp before CN constraints is ready.
-function removeCN(sdpLines, mLineIndex) {
-  const sdpLinesRes = sdpLines;
-  const mLineElements = sdpLines[mLineIndex].split(' ');
-  // Scan from end for the convenience of removing an item.
-  for (let i = sdpLines.length - 1; i >= 0; i--) {
-    const payload = extractSdp(sdpLines[i], /a=rtpmap:(\d+) CN\/\d+/i);
-    if (payload) {
-      const cnPos = mLineElements.indexOf(payload);
-      if (cnPos !== -1) {
-        // Remove CN payload from m line.
-        mLineElements.splice(cnPos, 1);
-      }
-      // Remove CN line in sdp
-      sdpLines.splice(i, 1);
-    }
-  }
-  sdpLinesRes[mLineIndex] = mLineElements.join(' ');
-  return sdpLines;
-}

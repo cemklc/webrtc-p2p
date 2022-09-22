@@ -1,8 +1,68 @@
-body {
-  font-family: sans-serif;
-}
-
 video {
   max-width: 100%;
   width: 320px;
+}
+
+.header {
+  text-align: center;
+  justify-content: center;
+}
+
+.container {
+  margin: 0 auto 0 auto;
+  max-width: 60em;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 10px;
+}
+
+.videocontainer {
+  position: relative;
+}
+
+.left {
+  grid-column: 1/2;
+}
+
+.right {
+  grid-column: 2/2;
+}
+
+.muted {
+  color: red;
+}
+
+.sharing {
+  color: red;
+}
+
+video {
+  height: 480px;
+  width: 640px;
+}
+
+#localVideo {
+  transform: scale(-1, 1);
+}
+
+button {
+  background-color: rgb(58, 200, 143);
+  border-radius: 12px;
+  border: none;
+  box-shadow: none;
+  padding: 13px 40px !important;
+  color: white;
+}
+
+button:disabled {
+  background-color: rgb(114, 115, 115);
+  border-radius: 12px;
+  border: none;
+  box-shadow: none;
+  padding: 13px 40px !important;
+  color: white;
+}
+
+.outer {
+  background-color: rgb(174, 179, 179);
 }
