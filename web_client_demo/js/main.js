@@ -60,6 +60,9 @@ socket.on('full', (roomObject) => {
 socket.on('join', (roomObject) => {
   console.log(`Another peer made a request to join room ${roomObject}`);
   console.log(`This peer is the initiator of room ${roomObject}!`);
+  if(!isInitiator){
+    isInitiator = true;
+  }
   isChannelReady = true;
 });
 

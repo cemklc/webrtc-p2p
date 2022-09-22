@@ -20,10 +20,19 @@ const d = {
   info: debug('info'),
 };
 
+// Map for each users with their rooms
+const roomConnections = new Map();
+
+
 // Socket.io connection/message handler
 const socketSignalingServer = (httpServerParams: Partial<ServerOptions> |
   http.Server | https.Server | undefined) => {
-  const io = new Server(httpServerParams);
+  const io = new Server(httpServerParams, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
   io.on('connection', (socket) => {
     // convenience function to log server messages on the client
     const log = (...args: string[]) => {
@@ -35,8 +44,11 @@ const socketSignalingServer = (httpServerParams: Partial<ServerOptions> |
 
     socket.on('message', (message: string) => {
       log('Client said: ', message);
-      // To support multiple rooms in app, would be room-only (not broadcast)
-      socket.broadcast.emit('message', message);
+      let userRoom = roomConnections.get(socket.id);
+      if (userRoom) {
+        socket.broadcast.to(userRoom).emit('message', message);
+      }
+
     });
 
     socket.on('create or join', (room: string) => {
@@ -51,12 +63,14 @@ const socketSignalingServer = (httpServerParams: Partial<ServerOptions> |
         socket.join(room);
         log(`Client ID ${socket.id} created room ${room}`);
         socket.emit('created', room, socket.id);
+        roomConnections.set(socket.id, room);
       } else if (numClients === 1) {
         log(`Client ID ${socket.id} joined room ${room}`);
         io.sockets.in(room).emit('join', room);
         socket.join(room);
         socket.emit('joined', room, socket.id);
         io.sockets.in(room).emit('ready');
+        roomConnections.set(socket.id, room);
       } else { // max two clients
         socket.emit('full', room);
       }
@@ -70,7 +84,7 @@ const socketSignalingServer = (httpServerParams: Partial<ServerOptions> |
 
 series(
   [
-  // 1. HTTP
+    // 1. HTTP
     (callback) => {
       console.log(yellow('[1. HTTP]'));
       if (expressServer.ws.http_port) {
@@ -122,7 +136,6 @@ series(
       console.log(red('The WebRTC signaling server failed to start'));
       process.exit(1);
     } else {
-    // We're up and running
       console.log(cyan('Server started!'));
       console.log(results);
     }
