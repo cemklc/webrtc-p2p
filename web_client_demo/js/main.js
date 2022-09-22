@@ -23,6 +23,8 @@ const remoteVideo = document.querySelector('#remoteVideo');
 const hangupButton = document.getElementById('hangupButton');
 const answerButton = document.getElementById('answerButton');
 const callButton = document.getElementById('callButton');
+const selectVideo = document.getElementById('selectVideo');
+const selectAudio = document.getElementById('selectAudio');
 
 const constraints = {
   audio: true,
@@ -98,6 +100,8 @@ function handleIceCandidate(event) {
     });
   } else {
     hangupButton.removeAttribute('disabled');
+    selectAudio.setAttribute('disabled', 'disabled');
+    selectVideo.setAttribute('disabled', 'disabled');
     console.log('End of candidates.');
     setPeerStatus('inCall');
   }
@@ -194,13 +198,33 @@ function doAnswer() {
 
 console.log('Getting user media with constraints', constraints);
 
-function gotStream(stream) {
+async function gotStream(stream) {
   console.log('Adding local stream.');
   localStream = stream;
   localVideo.srcObject = stream;
+
+  // Get available devices 
+  devices = await navigator.mediaDevices.enumerateDevices();
+  videoInputs = devices.filter(e => e.kind === 'videoinput');
+  audioInputs = devices.filter(e => e.kind === 'audioinput');
+  populateOptions(videoInputs, selectVideo);
+  populateOptions(audioInputs, selectAudio);
+
+
   sendMessage('got user media');
   if (isInitiator) {
     maybeStart();
+  }
+}
+
+async function populateOptions(deviceInputs, deviceType) {
+  let index = 0
+  for (item in deviceInputs) {
+    var opt = document.createElement('option');
+    opt.value = deviceInputs[item].deviceId;
+    opt.innerHTML = deviceInputs[item].label;
+    deviceType.appendChild(opt);
+    index++
   }
 }
 
@@ -212,9 +236,40 @@ async function init() {
     });
 };
 
+selectAudio.onchange = async () => {
+  switchDevices();
+}
+
+selectVideo.onchange = async () => {
+  switchDevices();
+}
+
+async function switchDevices() {
+  var audioDeviceId = selectAudio.options[selectAudio.selectedIndex].value;
+  var videoDeviceId = selectVideo.options[selectVideo.selectedIndex].value;
+  try {
+    let stream = await navigator.mediaDevices.getUserMedia({
+      audio: { deviceId: audioDeviceId },
+      video: { deviceId: videoDeviceId }
+    });
+    localStream = stream;
+    localVideo.srcObject = stream;
+    console.log('Switched local stream');
+  } catch (error) {
+    alert(error.message);
+  }
+  return;
+}
+
+function replaceTrack(withTrack) {
+  const sender = pc.getSenders().find(s => s.track && s.track.kind === withTrack.type);
+  if (sender) {
+    sender.replaceTrack(withTrack);
+  };
+  return;
+}
+
 init();
-
-
 
 hangupButton.onclick = async () => {
   hangup();
@@ -234,6 +289,8 @@ callButton.onclick = async () => {
 
 function stop() {
   // Set button availabilities
+  selectAudio.removeAttribute('disabled');
+  selectVideo.removeAttribute('disabled');
   answerButton.setAttribute('disabled', 'disabled');
   hangupButton.setAttribute('disabled', 'disabled');
 
