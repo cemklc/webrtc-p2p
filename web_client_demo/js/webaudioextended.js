@@ -22,22 +22,6 @@ function WebAudioExtended() {
     this.soundBuffer = null;
 }
 
-WebAudioExtended.prototype.dummyFilter = function (stream) {
-    var source = this.context.createMediaStreamSource(stream);
-    var distortion = this.context.createWaveShaper();
-    var filter = this.context.createBiquadFilter();
-    var destination = this.context.createMediaStreamDestination();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(500, this.context.currentTime);
-    filter.gain.setValueAtTime(25, this.context.currentTime);
-    source.connect(distortion);
-    //filter.connect(distortion);
-    distortion.connect(filter);
-    //convolver.connect(filter);
-    filter.connect(destination);
-
-    return destination.stream;
-}
 WebAudioExtended.prototype.anonFilter = function (stream) {
     let source = this.context.createMediaStreamSource(stream);
     var destination = this.context.createMediaStreamDestination();
@@ -100,39 +84,103 @@ WebAudioExtended.prototype.anonFilter = function (stream) {
     return destination.stream;
 }
 
-WebAudioExtended.prototype.applyFilter = function (stream) {
-    this.mic = this.context.createMediaStreamSource(stream);
-    this.mic.connect(this.filter);
-    this.peer = this.context.createMediaStreamDestination();
 
-    function makeDistortionCurve(amount) {
-        const k = typeof amount === "number" ? amount : 50;
-        const n_samples = 44100;
-        const curve = new Float32Array(n_samples);
-        const deg = Math.PI / 180;
-
-        for (let i = 0; i < n_samples; i++) {
-            const x = (i * 2) / n_samples - 1;
-            curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
-        }
-        return curve;
+WebAudioExtended.prototype.getFilteredStream = function (stream, filterType) {
+    switch (filterType) {
+        case 'anonymous':
+            stream = this.anonFilter(stream);
+            return stream;
+        case 'cuteRobot':
+            stream = this.cuteRobotFilter(stream);
+            return stream;
+        case 'autowah':
+            stream = this.autowahFilter(stream);
+            console.log(stream);
+            return stream;
+        default:
+            return stream;
     }
+}
 
-    // …
-    this.filter.curve = makeDistortionCurve(400);
-    this.filter.oversample = "4x";
-    this.filter.connect(this.peer);
-    return this.peer.stream;
-};
+WebAudioExtended.prototype.autowahFilter = function (stream) {
+    let source = this.context.createMediaStreamSource(stream);
+    var destination = this.context.createMediaStreamDestination();
 
-WebAudioExtended.prototype.clearFilter = async function () {
-    try {
-        let stream = await navigator.mediaDevices.getUserMedia({
-            audio: { deviceId: audioDeviceId },
-            video: { deviceId: videoDeviceId }
-        });
-        return stream;
-    } catch (error) {
-        alert(error.message);
+    let waveshaper = this.context.createWaveShaper();
+    let awFollower = this.context.createBiquadFilter();
+    awFollower.type = "lowpass";
+    awFollower.frequency.value = 10.0;
+
+    let curve = new Float32Array(65536);
+    for (let i = -32768; i < 32768; i++) {
+        curve[i + 32768] = ((i > 0) ? i : -i) / 32768;
     }
+    waveshaper.curve = curve;
+    waveshaper.connect(awFollower);
+
+    let wetGain = this.context.createGain();
+    wetGain.gain.value = 1;
+
+    let compressor = this.context.createDynamicsCompressor();
+    compressor.threshold.value = -20;
+    compressor.ratio.value = 16;
+
+    let awDepth = this.context.createGain();
+    awDepth.gain.value = 11585;
+    awFollower.connect(awDepth);
+
+    let awFilter = this.context.createBiquadFilter();
+    awFilter.type = "lowpass";
+    awFilter.Q.value = 15;
+    awFilter.frequency.value = 50;
+    awDepth.connect(awFilter.frequency);
+    awFilter.connect(wetGain);
+
+    source.connect(waveshaper);
+    source.connect(awFilter);
+
+    waveshaper.connect(compressor);
+    wetGain.connect(compressor);
+    compressor.connect(destination);
+
+    return destination.stream;
+}
+
+
+WebAudioExtended.prototype.cuteRobotFilter = function (stream) {
+    let source = this.context.createMediaStreamSource(stream);
+    var destination = this.context.createMediaStreamDestination();
+
+    // Wobble
+    let oscillator1 = this.context.createOscillator();
+    oscillator1.frequency.value = 50;
+    oscillator1.type = 'sawtooth';
+    let oscillator2 = this.context.createOscillator();
+    oscillator2.frequency.value = 500;
+    oscillator2.type = 'sawtooth';
+    let oscillator3 = this.context.createOscillator();
+    oscillator3.frequency.value = 50;
+    oscillator3.type = 'sawtooth';
+    // ---
+    let oscillatorGain = this.context.createGain();
+    oscillatorGain.gain.value = 0.004;
+    // ---
+    let delay = this.context.createDelay();
+    delay.delayTime.value = 0.01;
+
+    // Create graph
+    oscillator1.connect(oscillatorGain);
+    oscillator2.connect(oscillatorGain);
+    // oscillator3.connect(oscillatorGain);
+    oscillatorGain.connect(delay.delayTime);
+    // ---
+    source.connect(delay)
+    delay.connect(destination);
+
+    // Render
+    oscillator1.start(0);
+    oscillator2.start(0);
+    oscillator3.start(0);
+
+    return destination.stream;
 };

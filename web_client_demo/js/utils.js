@@ -8,6 +8,7 @@ const selectVideo = document.getElementById('selectVideo');
 const selectAudio = document.getElementById('selectAudio');
 const selectFilter = document.getElementById('selectFilter');
 
+const webAudio = new WebAudioExtended();
 
 async function getAvailableDevices() {
     // Get available devices 
@@ -35,13 +36,12 @@ async function populateOptions(deviceInputs, deviceType) {
     }
 };
 
-
-async function anonymousEffect(pc) {
+async function applyFilter(pc, filterType) {
     try {
         var sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
         if (sender) {
-            console.log(webAudio.filters);
-            const filteredStream = webAudio.anonFilter(localStream);
+            const filteredStream = webAudio.getFilteredStream(localStream, filterType);
+            console.log(filteredStream);
             const filteredTrack = filteredStream.getAudioTracks()[0];
             replaceAudioTrack(pc, filteredTrack);
             sender = filteredTrack;
@@ -55,6 +55,7 @@ async function anonymousEffect(pc) {
         console.log("Filter didn't applied");
     }
 };
+
 
 async function clearFilterEffect(pc) {
     var audioDeviceId = selectAudio.options[selectAudio.selectedIndex].value;
@@ -91,10 +92,16 @@ async function switchFilter(pc) {
             clearFilterEffect(pc);
             break;
         case 'anonymous':
-            anonymousEffect(pc);
+            applyFilter(pc, 'anonymous');
+            break;
+        case 'cuteRobot':
+            applyFilter(pc, 'cuteRobot');
+            break;
+        case 'autowah':
+            applyFilter(pc, 'autowah');
             break;
         default:
-           clearFilterEffect(pc);
+            clearFilterEffect(pc);
     }
 };
 

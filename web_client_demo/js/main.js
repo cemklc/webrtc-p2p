@@ -234,8 +234,6 @@ async function init() {
 console.log('Getting user media with constraints', constraints);
 init();
 
-const webAudio = new WebAudioExtended();
-
 selectAudio.onchange = async () => {
   switchDevices();
 }
