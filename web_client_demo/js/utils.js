@@ -4,10 +4,9 @@ const hangupButton = document.getElementById('hangupButton');
 const answerButton = document.getElementById('answerButton');
 const callButton = document.getElementById('callButton');
 const audioBtn = document.getElementById('audioBtn');
-const anonEffectButton = document.getElementById('anonEffectButton');
-const clearEffectButton = document.getElementById('clearEffectButton');
 const selectVideo = document.getElementById('selectVideo');
 const selectAudio = document.getElementById('selectAudio');
+const selectFilter = document.getElementById('selectFilter');
 
 
 async function getAvailableDevices() {
@@ -47,8 +46,6 @@ async function anonymousEffect(pc) {
             replaceAudioTrack(pc, filteredTrack);
             sender = filteredTrack;
             sender.enabled = !audioBtn.classList.contains('muted');
-            anonEffectButton.setAttribute('disabled', 'disabled');
-            clearEffectButton.removeAttribute('disabled');
         } else {
             console.log("Filter didn't applied");
         }
@@ -71,8 +68,6 @@ async function clearFilterEffect(pc) {
         const clearTrack = localStream.getAudioTracks()[0];
         replaceAudioTrack(pc, clearTrack);
         localVideo.srcObject = stream;
-        anonEffectButton.removeAttribute('disabled');
-        clearEffectButton.setAttribute('disabled', 'disabled');
     } catch (error) {
         alert(error.message);
     }
@@ -85,6 +80,22 @@ function replaceAudioTrack(pc, withTrack) {
         sender.replaceTrack(withTrack);
     };
     return;
+};
+
+async function switchFilter(pc) {
+    var selectedFilter = selectFilter.options[selectFilter.selectedIndex].value;
+
+    console.log('filter switched to: ', selectedFilter);
+    switch (selectedFilter) {
+        case 'noFilter':
+            clearFilterEffect(pc);
+            break;
+        case 'anonymous':
+            anonymousEffect(pc);
+            break;
+        default:
+           clearFilterEffect(pc);
+    }
 };
 
 async function switchDevices() {
@@ -111,8 +122,8 @@ function setPeerStatus(status) {
         case 'userJoined':
             notification = 'A user has joined the room, you can call now';
             break;
-        case 'joinedNoCall':
-            notification = 'You have joined the room, wait for the call';
+        case 'joined':
+            notification = 'You have joined the room, wait for the call from the room owner';
             break;
         case 'incomingCall':
             notification = 'You have an incoming call and can answer now';
@@ -142,8 +153,6 @@ function stop() {
     // Set button availabilities
     selectAudio.removeAttribute('disabled');
     selectVideo.removeAttribute('disabled');
-    anonEffectButton.setAttribute('disabled', 'disabled');
-    clearEffectButton.setAttribute('disabled', 'disabled');
     answerButton.setAttribute('disabled', 'disabled');
     hangupButton.setAttribute('disabled', 'disabled');
 

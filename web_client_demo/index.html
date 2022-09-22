@@ -15,13 +15,20 @@
         <div class="videocontainer right">
             <video id="remoteVideo" autoplay playsinline></video>
         </div>
+    </div>
+    <p class="peerStatus">Peer Status: <span id="peerId">The room is empty</span></p>
+
+    <div class="container">
         <div class="left">
             <p>
                 <button id="audioBtn">Mute Microphone</button>
             </p>
             <p>
-                <button id="anonEffectButton" disabled>Anonymous Voice Effect</button>
-                <button id="clearEffectButton" disabled>Clear Voice Filter</button>
+                <label>Voice effects: </label>
+                <select id="selectFilter">
+                    <option value="noFilter">No filter</option>
+                    <option value="anonymous">Anonymous</option>
+                </select>
             </p>
             <p>
                 <label>Camera:</label>
@@ -35,7 +42,6 @@
             </p>
         </div>
         <div class="right">
-            <p>Peer Status: <span id="peerId">The room is empty</span></p>
             <p>
                 <button id="callButton" disabled>Call</button>
                 <button id="answerButton" disabled>Answer</button>

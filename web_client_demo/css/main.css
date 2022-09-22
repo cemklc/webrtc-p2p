@@ -32,12 +32,9 @@ video {
   color: red;
 }
 
-.sharing {
-  color: red;
-}
 
 video {
-  height: 480px;
+  height: 420px;
   width: 640px;
 }
 
@@ -46,7 +43,7 @@ video {
 }
 
 button {
-  background-color: rgb(58, 200, 143);
+  background-color: rgb(152, 28, 184);
   border-radius: 12px;
   border: none;
   box-shadow: none;
@@ -65,4 +62,12 @@ button:disabled {
 
 .outer {
   background-color: rgb(174, 179, 179);
+}
+
+.peerStatus {
+  font-size: 24px;
+  text-align: center;
+  justify-content: center;
+  margin: 8px;
+  font-weight: bold;
 }

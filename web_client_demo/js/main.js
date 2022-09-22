@@ -31,11 +31,14 @@ audioBtn.addEventListener('click', () => {
   }
 
   audioTrack.enabled = !audioEnabled;
-
-  const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
-  if (sender) {
-    sender.track.enabled = !audioEnabled;
-  };
+  try {
+    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+    if (sender) {
+      sender.track.enabled = !audioBtn.classList.contains('muted');
+    };
+  } catch (error) {
+    console.log('Peer connection senders not found: ', error);
+  }
 
   audioEnabled = !audioEnabled;
   return;
@@ -83,6 +86,7 @@ socket.on('join', (roomObject) => {
 
 socket.on('joined', (roomObject) => {
   console.log(`joined: ${roomObject}`);
+  setPeerStatus('joined');
   isChannelReady = true;
 });
 
@@ -141,7 +145,6 @@ function handleIceCandidate(event) {
     hangupButton.removeAttribute('disabled');
     selectAudio.setAttribute('disabled', 'disabled');
     selectVideo.setAttribute('disabled', 'disabled');
-    anonEffectButton.removeAttribute('disabled');
     console.log('End of candidates.');
     setPeerStatus('inCall');
   }
@@ -233,16 +236,12 @@ init();
 
 const webAudio = new WebAudioExtended();
 
-anonEffectButton.onclick = async () => {
-  anonymousEffect(pc);
-}
-
-clearEffectButton.onclick = async () => {
-  clearFilterEffect(pc);
-}
-
 selectAudio.onchange = async () => {
   switchDevices();
+}
+
+selectFilter.onchange = async () => {
+  switchFilter(pc);
 }
 
 selectVideo.onchange = async () => {
