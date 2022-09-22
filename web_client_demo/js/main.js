@@ -145,8 +145,6 @@ function handleIceCandidate(event) {
     });
   } else {
     hangupButton.removeAttribute('disabled');
-    selectAudio.setAttribute('disabled', 'disabled');
-    selectVideo.setAttribute('disabled', 'disabled');
     console.log('End of candidates.');
     setPeerStatus('inCall');
   }
@@ -237,7 +235,7 @@ console.log('Getting user media with constraints', constraints);
 init();
 
 selectAudio.onchange = async () => {
-  switchDevices();
+  switchDevices(pc);
 }
 
 selectFilter.onchange = async () => {
@@ -245,7 +243,7 @@ selectFilter.onchange = async () => {
 }
 
 selectVideo.onchange = async () => {
-  switchDevices();
+  switchDevices(pc);
 }
 
 hangupButton.onclick = async () => {

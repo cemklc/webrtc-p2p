@@ -77,6 +77,8 @@ async function clearFilterEffect(pc) {
     return;
 };
 
+
+
 function replaceAudioTrack(pc, withTrack) {
     const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
     if (sender) {
@@ -107,7 +109,7 @@ async function switchFilter(pc) {
     }
 };
 
-async function switchDevices() {
+async function switchDevices(pc) {
     var audioDeviceId = selectAudio.options[selectAudio.selectedIndex].value;
     var videoDeviceId = selectVideo.options[selectVideo.selectedIndex].value;
     try {
@@ -117,9 +119,27 @@ async function switchDevices() {
         });
         localStream = stream;
         localVideo.srcObject = stream;
-        console.log('Switched local stream');
+        console.log('Switched devices');
+        if (pc) {
+            let sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+            if (sender) {
+                replaceTracks(pc, localStream.getVideoTracks()[0], localStream.getAudioTracks()[0]);
+            };
+        }
     } catch (error) {
         alert(error.message);
+    }
+    return;
+};
+
+function replaceTracks(pc, videoTrack, audioTrack) {
+    const video = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+    const audio = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+    if (video) {
+        video.replaceTrack(videoTrack);
+    };
+    if (audio){
+        audio.replaceTrack(audioTrack);
     }
     return;
 };
@@ -175,7 +195,7 @@ function hangup() {
     setPeerStatus('closed');
     stop();
     sendMessage('bye');
-  }
+}
 
 function handleRemoteHangup() {
     console.log('Session terminated.');
