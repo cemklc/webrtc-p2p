@@ -16,43 +16,51 @@
             <video id="remoteVideo" autoplay playsinline></video>
         </div>
     </div>
-    <p class="peerStatus">Peer Status: <span id="peerId">The room is empty</span></p>
+    <p class="status">Room Status: <span id="peerId">The room is empty</span></p>
+    <p class="status">Current room name: <span id="currentRoom"></span></p>
 
     <div class="container">
         <div class="left">
-            <p>
+            <p class="buttons">
                 <button id="audioBtn">Mute Microphone</button>
+                <span style="margin-top: 10px; font-size: larger;">
+                    <label class="select">Voice effects: </label>
+                    <select id="selectFilter">
+                        <option value="noFilter">No filter</option>
+                        <option value="anonymous">Anonymous</option>
+                        <option value="cuteRobot">Cute Robot</option>
+                        <option value="autowah">Auto wah</option>
+                    </select>
+                </span>
             </p>
             <p>
-                <label>Voice effects: </label>
-                <select id="selectFilter">
-                    <option value="noFilter">No filter</option>
-                    <option value="anonymous">Anonymous</option>
-                    <option value="cuteRobot">Cute Robot</option>
-                    <option value="autowah">Auto wah</option>
-                </select>
             </p>
             <p>
-                <label>Camera:</label>
+                <label class="select">Camera:</label>
                 <select id="selectVideo">
                 </select>
             </p>
             <p>
-                <label>Microphone:</label>
+                <label class="select">Microphone:</label>
                 <select id="selectAudio">
                 </select>
             </p>
         </div>
         <div class="right">
-            <p>
+            <p class="buttons">
                 <button id="callButton" disabled>Call</button>
                 <button id="answerButton" disabled>Answer</button>
                 <button id="hangupButton" disabled>Hangup</button>
             </p>
             <p>
             </p>
-            <button id="roomButton" class="roomButton" test>Enter a new room</button>
-            <input id='newRoomtext' class="search" type="text" placeholder="Enter a room name" onkeydown="search(this)">
+            <p class="buttons">
+                <input id='newRoomtext' class="search" type="text" placeholder="Enter a room name"
+                    onkeydown="search(this)">
+            </p>
+            <p class="buttons">
+                <button id="roomButton" class="roomButton" test>Join a new room</button>
+            </p>
         </div>
     </div>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>

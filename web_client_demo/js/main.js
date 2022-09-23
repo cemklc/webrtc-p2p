@@ -26,8 +26,10 @@ audioBtn.addEventListener('click', () => {
 
   if (audioEnabled) {
     audioBtn.classList.add('muted');
+    audioBtn.innerText = 'Unmute Microphone';
   } else {
     audioBtn.classList.remove('muted');
+    audioBtn.innerText = 'Mute Microphone';
   }
 
   audioTrack.enabled = !audioEnabled;
@@ -56,6 +58,7 @@ do {
 } while (validRoom === null || validRoom === "")
 
 const room = validRoom;
+setRoomName(room);
 
 const socket = io();
 
@@ -276,10 +279,13 @@ newRoomButton.onclick = async () => {
 
 function goToNewRoom(roomName) {
   console.log('Attempted to create or new join room', roomName);
-  if (roomName !== '') {
+  if (roomName === room) {
+    alert("You are already in room: " + roomName + " Please enter a different room name")
+  } else if (roomName !== '') {
     isStarted = false;
     isChannelReady = false;
     socket.emit('create or join', roomName);
+    setRoomName(roomName);
   } else {
     alert('Room name can not be empty');
   }

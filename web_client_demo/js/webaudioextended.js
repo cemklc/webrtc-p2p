@@ -11,8 +11,9 @@
 // WebAudioExtended helper class which takes care of the WebAudio related parts.
 
 WebAudioExtended.prototype.filters = {
-    troll: 'troll',
-    anon: 'anonymous'
+    anon: 'anonymous',
+    autowahFilter: 'autowahFilter',
+    cuteRobotFilter: 'cuteRobotFilter',
 }
 
 function WebAudioExtended() {

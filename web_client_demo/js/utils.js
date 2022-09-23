@@ -138,7 +138,7 @@ function replaceTracks(pc, videoTrack, audioTrack) {
     if (video) {
         video.replaceTrack(videoTrack);
     };
-    if (audio){
+    if (audio) {
         audio.replaceTrack(audioTrack);
     }
     return;
@@ -207,4 +207,8 @@ function handleRemoteHangup() {
 function sendMessage(message) {
     console.log('Client sending message: ', message);
     socket.emit('message', message);
+}
+
+function setRoomName(roomName) {
+    document.getElementById('currentRoom').innerText = roomName;
 }
