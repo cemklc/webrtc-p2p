@@ -2,7 +2,6 @@
 /* eslint-disable no-restricted-globals */
 /* eslint-disable no-undef */
 /* eslint-disable no-alert */
-let isChannelReady = false;
 let isInitiator = false;
 let isStarted = false;
 let localStream;
@@ -98,31 +97,38 @@ function handleIceCandidate(event) {
 }
 
 function createPeerConnection() {
-  try {
-    pc = new RTCPeerConnection(pcConfig);
-    pc.onicecandidate = handleIceCandidate;
-    pc.onaddstream = handleRemoteStreamAdded;
-    pc.onremovestream = handleRemoteStreamRemoved;
-    console.log('Created RTCPeerConnnection');
-  } catch (e) {
-    console.log(`Failed to create PeerConnection, exception: ${e.message}`);
-    alert('Cannot create RTCPeerConnection object.');
+  if (!isStarted && typeof localStream !== 'undefined') {
+    try {
+      pc = new RTCPeerConnection(pcConfig);
+      pc.onicecandidate = handleIceCandidate;
+      pc.onaddstream = handleRemoteStreamAdded;
+      pc.onremovestream = handleRemoteStreamRemoved;
+      console.log('Created RTCPeerConnnection');
+      isStarted = true;
+      console.log('isInitiator', isInitiator);
+      if (isInitiator) {
+        // Enable call button for the room owner
+        console.log('A new user is joined and peer connection is created, you can call your peer!');
+        setPeerStatus('userJoined');
+        callButton.removeAttribute('disabled');
+      }
+    } catch (e) {
+      console.log(`Failed to create PeerConnection, exception: ${e.message}`);
+      alert('Cannot create RTCPeerConnection object.');
+    }
   }
 }
 
-function maybeStart() {
-  console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
-  if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
-    console.log('>>>>>> creating peer connection');
-    createPeerConnection();
-    isStarted = true;
-    console.log('isInitiator', isInitiator);
-    if (isInitiator) {
-      // Enable call button for the room owner
-      console.log('A new user is joined and peer connection is created, you can call your peer!');
-      setPeerStatus('userJoined');
-      callButton.removeAttribute('disabled');
-    }
+function goToNewRoom(roomName) {
+  console.log('Attempted to create or new join room', roomName);
+  if (roomName === room) {
+    alert(`You are already in room: ${roomName} Please enter a different room name`);
+  } else if (roomName !== '') {
+    isStarted = false;
+    socket.emit('create or join', roomName);
+    setRoomName(roomName);
+  } else {
+    alert('Room name can not be empty');
   }
 }
 
@@ -134,14 +140,18 @@ socket.on('created', (roomObject) => {
 
 socket.on('full', (roomObject) => {
   console.log(`Room ${roomObject} is full`);
+  do {
+    validRoom = prompt('You have joined a room that is full, enter a different room name');
+  } while (validRoom === null || validRoom === '');
+  goToNewRoom(validRoom);
 });
 
 socket.on('join', (roomObject) => {
   console.log(`Another peer made a request to join room ${roomObject}`);
   console.log(`This peer is the initiator of room ${roomObject}!`);
-  isChannelReady = true;
   if (isInitiator) {
-    maybeStart();
+    console.log('Another user joined the room, calling createPeerConnection');
+    createPeerConnection();
   }
 });
 
@@ -151,7 +161,6 @@ socket.on('joined', (roomObject) => {
   if (isInitiator) {
     isInitiator = false;
   }
-  isChannelReady = true;
 });
 
 socket.on('log', (array) => {
@@ -161,11 +170,10 @@ socket.on('log', (array) => {
 // This client receives a message
 socket.on('message', (message) => {
   console.log('Client received message:', message);
-  if (message === 'got user media') {
-    maybeStart();
-  } else if (message.type === 'offer') {
+  if (message.type === 'offer') {
     if (!isInitiator && !isStarted) {
-      maybeStart();
+      console.log('Offer came, calling createPeerConnection');
+      createPeerConnection();
       pc.setRemoteDescription(new RTCSessionDescription(message));
     }
     console.log('Offer came from peer, you can press answer!');
@@ -224,9 +232,8 @@ async function gotStream(stream) {
   // Get available devices
   getAvailableDevices();
 
-  sendMessage('got user media');
   if (isInitiator) {
-    maybeStart();
+    console.log('You are the room owner. You can call your peer when someone enters your room');
   }
 }
 
@@ -261,20 +268,6 @@ answerButton.onclick = async () => {
   console.log('clicked answer');
   doAnswer();
 };
-
-function goToNewRoom(roomName) {
-  console.log('Attempted to create or new join room', roomName);
-  if (roomName === room) {
-    alert(`You are already in room: ${roomName} Please enter a different room name`);
-  } else if (roomName !== '') {
-    isStarted = false;
-    isChannelReady = false;
-    socket.emit('create or join', roomName);
-    setRoomName(roomName);
-  } else {
-    alert('Room name can not be empty');
-  }
-}
 
 function search(ele) {
   if (isStarted) {
