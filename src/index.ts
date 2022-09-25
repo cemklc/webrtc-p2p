@@ -64,25 +64,24 @@ const socketSignalingServer = (httpServerParams: Partial<ServerOptions> |
         roomConnections.set(socket.id, room);
       } else if (numClients === 1) {
         log(`Client ID ${socket.id} joined room ${room}`);
-        io.sockets.in(room).emit('join', room);
+        socket.broadcast.to(room).emit('join', room);
         socket.join(room);
         socket.emit('joined', room, socket.id);
-        io.sockets.in(room).emit('ready');
         roomConnections.set(socket.id, room);
       } else { // max two clients
         socket.emit('full', room);
       }
+    });
 
-      socket.on('disconnect', () => {
-        try {
-          const userRoom = roomConnections.get(socket.id);
-          socket.broadcast.to(userRoom).emit('message', 'bye');
-          roomConnections.delete(socket.id);
-        } catch (error) {
-          console.log(error);
-        }
-        log(`Client ID ${socket.id} disconnected.`);
-      });
+    socket.on('disconnect', () => {
+      try {
+        const userRoom = roomConnections.get(socket.id);
+        socket.broadcast.to(userRoom).emit('message', 'bye');
+        roomConnections.delete(socket.id);
+      } catch (error) {
+        console.log(error);
+      }
+      log(`Client ID ${socket.id} disconnected.`);
     });
   });
 };

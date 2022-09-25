@@ -60,7 +60,7 @@ do {
   validRoom = prompt('Enter a room name to chat with your friend:');
 } while (validRoom === null || validRoom === '');
 
-const room = validRoom;
+let room = validRoom;
 setRoomName(room);
 
 const socket = io();
@@ -124,6 +124,7 @@ function goToNewRoom(roomName) {
   if (roomName === room) {
     alert(`You are already in room: ${roomName} Please enter a different room name`);
   } else if (roomName !== '') {
+    room = roomName;
     isStarted = false;
     socket.emit('create or join', roomName);
     setRoomName(roomName);
@@ -143,16 +144,16 @@ socket.on('full', (roomObject) => {
   do {
     validRoom = prompt('You have joined a room that is full, enter a different room name');
   } while (validRoom === null || validRoom === '');
+  room = '';
   goToNewRoom(validRoom);
 });
 
 socket.on('join', (roomObject) => {
   console.log(`Another peer made a request to join room ${roomObject}`);
   console.log(`This peer is the initiator of room ${roomObject}!`);
-  if (isInitiator) {
-    console.log('Another user joined the room, calling createPeerConnection');
-    createPeerConnection();
-  }
+  isInitiator = true;
+  console.log('Another user joined the room, calling createPeerConnection');
+  createPeerConnection();
 });
 
 socket.on('joined', (roomObject) => {

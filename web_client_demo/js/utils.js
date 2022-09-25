@@ -25,7 +25,7 @@ function populateOptions(deviceInputs, deviceType) {
 }
 
 async function getAvailableDevices() {
-  // Get available devices
+  // Get available devices and fill the select forms
   try {
     devices = await navigator.mediaDevices.enumerateDevices();
     videoInputs = devices.filter((e) => e.kind === 'videoinput');
@@ -39,6 +39,7 @@ async function getAvailableDevices() {
   return true;
 }
 
+// Replace the audio track with a new one
 function replaceAudioTrack(pc, withTrack) {
   const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'audio');
   if (sender) {
@@ -46,12 +47,12 @@ function replaceAudioTrack(pc, withTrack) {
   }
 }
 
+// Apply voice effect filter
 async function applyFilter(pc, filterType) {
   try {
     let sender = pc.getSenders().find((s) => s.track && s.track.kind === 'audio');
     if (sender) {
       const filteredStream = webAudio.getFilteredStream(localStream, filterType);
-      console.log(filteredStream);
       const filteredTrack = filteredStream.getAudioTracks()[0];
       replaceAudioTrack(pc, filteredTrack);
       sender = filteredTrack;
@@ -60,8 +61,7 @@ async function applyFilter(pc, filterType) {
       console.log('Filter didn\'t applied');
     }
   } catch (e) {
-    console.log('Error: ', e);
-    console.log('Filter didn\'t applied');
+    console.log('Error when applying voice filter: ', e);
   }
 }
 
@@ -115,6 +115,7 @@ function replaceTracks(pc, videoTrack, audioTrack) {
   }
 }
 
+// Switch camera or microphone device and set both local and remote streams
 async function switchDevices(pc) {
   const audioDeviceId = selectAudio.options[selectAudio.selectedIndex].value;
   const videoDeviceId = selectVideo.options[selectVideo.selectedIndex].value;
@@ -172,8 +173,6 @@ function onCreateSessionDescriptionError(error) {
 
 function stop() {
   // Set button availabilities
-  selectAudio.removeAttribute('disabled');
-  selectVideo.removeAttribute('disabled');
   answerButton.setAttribute('disabled', 'disabled');
   hangupButton.setAttribute('disabled', 'disabled');
 
