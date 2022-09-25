@@ -111,6 +111,8 @@ function replaceTracks(pc, videoTrack, audioTrack) {
     video.replaceTrack(videoTrack);
   }
   if (audio) {
+    // eslint-disable-next-line no-param-reassign
+    audioTrack.enabled = !audioBtn.classList.contains('muted');
     audio.replaceTrack(audioTrack);
   }
 }
@@ -128,10 +130,7 @@ async function switchDevices(pc) {
     localVideo.srcObject = stream;
     console.log('Switched devices');
     if (pc) {
-      const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
-      if (sender) {
-        replaceTracks(pc, localStream.getVideoTracks()[0], localStream.getAudioTracks()[0]);
-      }
+      replaceTracks(pc, localStream.getVideoTracks()[0], localStream.getAudioTracks()[0]);
     }
   } catch (error) {
     alert(error.message);
