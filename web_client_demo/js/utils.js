@@ -96,17 +96,17 @@ async function switchFilter(pc) {
 
   console.log('filter switched to: ', selectedFilter);
   switch (selectedFilter) {
-    case 'noFilter':
+    case webAudio.filters.noFilter:
       clearFilterEffect(pc);
       break;
-    case 'anonymous':
-      applyFilter(pc, 'anonymous');
+    case webAudio.filters.anonymousFilter:
+      applyFilter(pc, webAudio.filters.anonymousFilter);
       break;
-    case 'cuteRobot':
-      applyFilter(pc, 'cuteRobot');
+    case webAudio.filters.cuteRobotFilter:
+      applyFilter(pc, webAudio.filters.cuteRobotFilter);
       break;
-    case 'autowah':
-      applyFilter(pc, 'autowah');
+    case webAudio.filters.autowahFilter:
+      applyFilter(pc, webAudio.filters.autowahFilter);
       break;
     default:
       clearFilterEffect(pc);

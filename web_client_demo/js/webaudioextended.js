@@ -17,13 +17,13 @@ class WebAudioExtended {
   getFilteredStream(stream, filterType) {
     let filteredStream;
     switch (filterType) {
-      case 'anonymous':
+      case this.filters.anonymousFilter:
         filteredStream = this.anonFilter(stream);
         return filteredStream;
-      case 'cuteRobot':
+      case this.filters.cuteRobotFilter:
         filteredStream = this.cuteRobotFilter(stream);
         return filteredStream;
-      case 'autowah':
+      case this.filters.autowahFilter:
         filteredStream = this.autowahFilter(stream);
         return filteredStream;
       default:
@@ -176,7 +176,8 @@ class WebAudioExtended {
   }
 }
 WebAudioExtended.prototype.filters = {
-  anon: 'anonymous',
-  autowahFilter: 'autowahFilter',
-  cuteRobotFilter: 'cuteRobotFilter',
+  anonymousFilter: 'anonymous',
+  autowahFilter: 'autowah',
+  cuteRobotFilter: 'cuteRobot',
+  noFilter: 'noFilter',
 };
