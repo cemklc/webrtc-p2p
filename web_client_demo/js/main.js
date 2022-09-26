@@ -54,22 +54,6 @@ const constraints = {
   video: true,
 };
 
-/// //////////////////////////////////////////
-
-do {
-  validRoom = prompt('Enter a room name to chat with your friend:');
-} while (validRoom === null || validRoom === '');
-
-let room = validRoom;
-setRoomName(room);
-
-const socket = io();
-
-if (room !== '') {
-  socket.emit('create or join', room);
-  console.log('Attempted to create or  join room', room);
-}
-
 function handleRemoteStreamAdded(event) {
   console.log('Remote stream added.');
   remoteStream = event.stream;
@@ -92,7 +76,7 @@ function handleIceCandidate(event) {
   } else {
     hangupButton.removeAttribute('disabled');
     console.log('End of candidates.');
-    setPeerStatus('inCall');
+    setPeerStatus(peerStatus.IN_CALL);
   }
 }
 
@@ -109,7 +93,7 @@ function createPeerConnection() {
       if (isInitiator) {
         // Enable call button for the room owner
         console.log('A new user is joined and peer connection is created, you can call your peer!');
-        setPeerStatus('userJoined');
+        setPeerStatus(peerStatus.USER_JOINED);
         callButton.removeAttribute('disabled');
       }
     } catch (e) {
@@ -117,6 +101,22 @@ function createPeerConnection() {
       alert('Cannot create RTCPeerConnection object.');
     }
   }
+}
+
+/// //////////////////////////////////////////
+
+do {
+  validRoom = prompt('Enter a room name to chat with your friend:');
+} while (validRoom === null || validRoom === '');
+
+let room = validRoom;
+setRoomName(room);
+
+const socket = io();
+
+if (room !== '') {
+  socket.emit('create or join', room);
+  console.log('Attempted to create or  join room', room);
 }
 
 function goToNewRoom(roomName) {
@@ -127,6 +127,7 @@ function goToNewRoom(roomName) {
     room = roomName;
     isStarted = false;
     socket.emit('create or join', roomName);
+    setPeerStatus(peerStatus.EMPTY);
     setRoomName(roomName);
   } else {
     alert('Room name can not be empty');
@@ -158,7 +159,7 @@ socket.on('join', (roomObject) => {
 
 socket.on('joined', (roomObject) => {
   console.log(`joined: ${roomObject}`);
-  setPeerStatus('joined');
+  setPeerStatus(peerStatus.JOINED);
   if (isInitiator) {
     isInitiator = false;
   }
@@ -178,7 +179,7 @@ socket.on('message', (message) => {
       pc.setRemoteDescription(new RTCSessionDescription(message));
     }
     console.log('Offer came from peer, you can press answer!');
-    setPeerStatus('incomingCall');
+    setPeerStatus(peerStatus.INCOMING_CALL);
     answerButton.removeAttribute('disabled');
   } else if (message.type === 'answer' && isStarted) {
     pc.setRemoteDescription(new RTCSessionDescription(message));
@@ -270,8 +271,15 @@ answerButton.onclick = async () => {
   doAnswer();
 };
 
+callButton.onclick = async () => {
+  console.log('clicked call');
+  doCall();
+  callButton.setAttribute('disabled', 'disabled');
+  setPeerStatus(peerStatus.CALLING);
+};
+
 function search(ele) {
-  if (isStarted) {
+  if (event.key === 'Enter' && isStarted) {
     alert('You can\'t switch rooms during a call..');
   } else if (event.key === 'Enter') {
     goToNewRoom(ele.value);
@@ -287,12 +295,6 @@ newRoomButton.onclick = async () => {
   }
 };
 
-callButton.onclick = async () => {
-  console.log('clicked call');
-  doCall();
-  callButton.setAttribute('disabled', 'disabled');
-  setPeerStatus('calling');
-};
 /// /////////////////////////////////////////////
 
 window.onbeforeunload = function bye() {

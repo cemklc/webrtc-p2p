@@ -12,6 +12,15 @@ const selectAudio = document.getElementById('selectAudio');
 const selectFilter = document.getElementById('selectFilter');
 const newRoomButton = document.getElementById('roomButton');
 const roomText = document.getElementById('newRoomtext');
+const peerStatus = {
+  IN_CALL: 'inCall',
+  USER_JOINED: 'userJoined',
+  JOINED: 'joined',
+  INCOMING_CALL: 'incomingCall',
+  CALLING: 'calling',
+  CLOSED: 'closed',
+  EMPTY: 'empty',
+};
 
 const webAudio = new WebAudioExtended();
 
@@ -141,23 +150,26 @@ async function switchDevices(pc) {
 function setPeerStatus(status) {
   let notification = '';
   switch (status) {
-    case 'userJoined':
+    case peerStatus.USER_JOINED:
       notification = 'A user has joined the room, you can call now';
       break;
-    case 'joined':
+    case peerStatus.JOINED:
       notification = 'You have joined the room, wait for the call from the room owner';
       break;
-    case 'incomingCall':
+    case peerStatus.INCOMING_CALL:
       notification = 'You have an incoming call and can answer now';
       break;
-    case 'inCall':
+    case peerStatus.IN_CALL:
       notification = 'You are in a call';
       break;
-    case 'closed':
+    case peerStatus.CLOSED:
       notification = 'Call ended';
       break;
-    case 'calling':
+    case peerStatus.CALLING:
       notification = 'Calling...';
+      break;
+    case peerStatus.EMPTY:
+      notification = 'The room is empty';
       break;
 
     default:
@@ -187,14 +199,14 @@ function sendMessage(message) {
 
 function hangup() {
   console.log('Hanging up.');
-  setPeerStatus('closed');
+  setPeerStatus(peerStatus.CLOSED);
   stop();
   sendMessage('bye');
 }
 
 function handleRemoteHangup() {
   console.log('Session terminated.');
-  setPeerStatus('closed');
+  setPeerStatus(peerStatus.CLOSED);
   stop();
   isInitiator = false;
 }
