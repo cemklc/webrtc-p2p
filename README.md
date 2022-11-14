@@ -40,4 +40,4 @@ After you hangup, you will be able to join a new room with the input field at th
 
 Initial code from https://github.com/googlecodelabs/webrtc-web, AgilityFeat
 
-A deployed demo can be found here: https://webrtc-p2p-production.up.railway.app/
+A deployed demo can be found here: https://webrtc-p2p-production-e721.up.railway.app/
